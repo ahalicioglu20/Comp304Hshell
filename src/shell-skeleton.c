@@ -482,6 +482,8 @@ int process_command(struct command_t *command) {
 	} else {
 		// TODO: implement background processes here
 		if (command->background) {
+			// If the command is going to run in the background
+			// Parent process dont wait for it, thus directly returns
 			return SUCCESS;
 		}
 		wait(0); // wait for child process to finish
