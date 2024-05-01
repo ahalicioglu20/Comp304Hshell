@@ -430,16 +430,28 @@ int process_command(struct command_t *command) {
 
 		// TODO: do your own exec with path resolving using execv()
 		// do so by replacing the execvp call below
-		execvp(command->name, command->args); // exec+args+path
+		// execvp(command->name, command->args); // exec+args+path
+		extern char** environ;
+		char command[256];
+		snprintf(command, sizeof(command), "%s %s %s %s", command->name)
+		char *cmd[] = {environ, "-c",command_arguments, NULL};
+		execv(command->name, command->args);
 		exit(0);
 	} else {
 		// TODO: implement background processes here
+		if (command->background) {
+			return SUCCESS;
+		}
 		wait(0); // wait for child process to finish
 		return SUCCESS;
 	}
 
 	// TODO: your implementation here
-
+	
+	// For piping
+	if (command->next != NULL) {
+		// In here add the piping mechanism	
+	}
 	printf("-%s: %s: command not found\n", sysname, command->name);
 	return UNKNOWN;
 }
