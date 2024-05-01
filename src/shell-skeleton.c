@@ -394,6 +394,43 @@ int main() {
 	return 0;
 }
 
+char *get_path(char *command_name) {
+
+	char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+        perror("getcwd");
+        return NULL;
+    }
+
+    // Get the PATH environment variable
+    char *path_env = getenv("PATH");
+    if (!path_env) {
+        path_env = "";
+    }
+
+	// Concatinating cwd with env PATH
+    char *new_path = malloc(strlen(cwd) + strlen(path_env) + 2);
+    sprintf(new_path, "%s:%s", path_env, cwd);
+
+    // Check each directory in the concateneted path
+    char *resolved_path = NULL;
+    char *dir = strtok(new_path, ":");
+    while (dir != NULL) {
+        char *full_path = malloc(strlen(dir) + strlen(command_name) + 2);
+        sprintf(full_path, "%s/%s", dir, command_name);
+        if (access(full_path, X_OK) == 0) {
+            resolved_path = strdup(full_path);
+            free(full_path);
+            break;
+        }
+        free(full_path);
+        dir = strtok(NULL, ":");
+    }
+
+    free(new_path);
+    return resolved_path;
+}
+
 int process_command(struct command_t *command) {
 	int r;
 
@@ -417,6 +454,7 @@ int process_command(struct command_t *command) {
 		}
 	}
 
+
 	pid_t pid = fork();
 	// child
 	if (pid == 0) {
@@ -431,12 +469,16 @@ int process_command(struct command_t *command) {
 		// TODO: do your own exec with path resolving using execv()
 		// do so by replacing the execvp call below
 		// execvp(command->name, command->args); // exec+args+path
-		extern char** environ;
-		char command[256];
-		snprintf(command, sizeof(command), "%s %s %s %s", command->name)
-		char *cmd[] = {environ, "-c",command_arguments, NULL};
-		execv(command->name, command->args);
-		exit(0);
+		char *command_path = get_path(command->name);
+		// If NULL
+		if (!command_path) {
+			printf("Command not found.\n");
+			return UNKNOWN;
+		}
+		execv(command_path, command->args);  // execute command
+		// execv does not come back to here unless there is an error thus
+		perror("execv");  
+        exit(EXIT_FAILURE);
 	} else {
 		// TODO: implement background processes here
 		if (command->background) {
