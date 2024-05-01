@@ -454,7 +454,72 @@ int process_command(struct command_t *command) {
 		}
 	}
 
+	int num_pipes = 0;
+    for (struct command_t *cmd = command; cmd->next != NULL; cmd = cmd->next) {
+        num_pipes++;
+    }
 
+	printf("Number of pipes: %d\n", num_pipes);
+
+    int pipes[num_pipes][2];
+    for (int i = 0; i < num_pipes; i++) {
+        if (pipe(pipes[i]) == -1) {
+            perror("pipe");
+            return EXIT_FAILURE;
+        }
+    }
+
+	int i = 0;
+    pid_t pid;
+    while (command != NULL) {
+        pid = fork();
+        if (pid == 0) { // Child process
+            // Redirect stdin if not the first command
+            if (i > 0) {
+                dup2(pipes[i - 1][0], STDIN_FILENO);
+            }
+            // Redirect stdout if not the last command
+            if (command->next != NULL) {
+                dup2(pipes[i][1], STDOUT_FILENO);
+            }
+            // Close all pipes
+            for (int j = 0; j < num_pipes; j++) {
+                close(pipes[j][0]);
+                close(pipes[j][1]);
+            }
+            char *command_path = get_path(command->name);
+            if (!command_path) {
+                printf("Command not found.\n");
+                return UNKNOWN;
+            }
+			printf("Bug in here");
+
+            execv(command_path, command->args);
+            perror("execv");
+            return EXIT_FAILURE;
+        } else if (pid < 0) {
+            perror("fork");
+            return EXIT_FAILURE;
+        }
+        // Move to the next command
+        command = command->next;
+        i++;
+    }
+
+    // Parent closes all pipes
+    for (int j = 0; j < num_pipes; j++) {
+        close(pipes[j][0]);
+        close(pipes[j][1]);
+    }
+
+    if (!command->background) {
+        for (int j = 0; j <= num_pipes; j++) {
+            wait(0); // Wait for all child processes
+        }
+    }
+
+	return SUCCESS;
+	/*
 	pid_t pid = fork();
 	// child
 	if (pid == 0) {
@@ -480,7 +545,7 @@ int process_command(struct command_t *command) {
 		perror("execv");  
         exit(EXIT_FAILURE);
 	} else {
-		
+
 		// TODO: implement background processes here
 		if (command->background) {
 			// If the command is going to run in the background
@@ -499,4 +564,5 @@ int process_command(struct command_t *command) {
 	}
 	printf("-%s: %s: command not found\n", sysname, command->name);
 	return UNKNOWN;
+	*/
 }
