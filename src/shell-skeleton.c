@@ -480,6 +480,7 @@ int process_command(struct command_t *command) {
 		perror("execv");  
         exit(EXIT_FAILURE);
 	} else {
+		
 		// TODO: implement background processes here
 		if (command->background) {
 			// If the command is going to run in the background
