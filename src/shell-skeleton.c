@@ -468,31 +468,29 @@ int process_command(struct command_t *command) {
             return EXIT_FAILURE;
         }
     }
-
 	int i = 0;
     pid_t pid;
-    while (command != NULL) {
+    while (i <= num_pipes) {
         pid = fork();
-        if (pid == 0) { // Child process
-            // Redirect stdin if not the first command
+        if (pid == 0) { 
+            
             if (i > 0) {
                 dup2(pipes[i - 1][0], STDIN_FILENO);
             }
-            // Redirect stdout if not the last command
             if (command->next != NULL) {
                 dup2(pipes[i][1], STDOUT_FILENO);
             }
-            // Close all pipes
+            
             for (int j = 0; j < num_pipes; j++) {
                 close(pipes[j][0]);
                 close(pipes[j][1]);
             }
+			
             char *command_path = get_path(command->name);
             if (!command_path) {
                 printf("Command not found.\n");
                 return UNKNOWN;
             }
-			printf("Bug in here");
 
             execv(command_path, command->args);
             perror("execv");
@@ -500,13 +498,13 @@ int process_command(struct command_t *command) {
         } else if (pid < 0) {
             perror("fork");
             return EXIT_FAILURE;
-        }
-        // Move to the next command
-        command = command->next;
-        i++;
-    }
-
-    // Parent closes all pipes
+		}
+		if (command->next != NULL){
+        	command = command->next;
+		}
+		i++;
+	}
+ 
     for (int j = 0; j < num_pipes; j++) {
         close(pipes[j][0]);
         close(pipes[j][1]);
@@ -514,55 +512,9 @@ int process_command(struct command_t *command) {
 
     if (!command->background) {
         for (int j = 0; j <= num_pipes; j++) {
-            wait(0); // Wait for all child processes
+            wait(0); 
         }
     }
 
 	return SUCCESS;
-	/*
-	pid_t pid = fork();
-	// child
-	if (pid == 0) {
-		/// This shows how to do exec with environ (but is not available on MacOs)
-		// extern char** environ; // environment variables
-		// execvpe(command->name, command->args, environ); // exec+args+path+environ
-
-		/// This shows how to do exec with auto-path resolve
-		// add a NULL argument to the end of args, and the name to the beginning
-		// as required by exec
-
-		// TODO: do your own exec with path resolving using execv()
-		// do so by replacing the execvp call below
-		// execvp(command->name, command->args); // exec+args+path
-		char *command_path = get_path(command->name);
-		// If NULL
-		if (!command_path) {
-			printf("Command not found.\n");
-			return UNKNOWN;
-		}
-		execv(command_path, command->args);  // execute command
-		// execv does not come back to here unless there is an error thus
-		perror("execv");  
-        exit(EXIT_FAILURE);
-	} else {
-
-		// TODO: implement background processes here
-		if (command->background) {
-			// If the command is going to run in the background
-			// Parent process dont wait for it, thus directly returns
-			return SUCCESS;
-		}
-		wait(0); // wait for child process to finish
-		return SUCCESS;
-	}
-
-	// TODO: your implementation here
-	
-	// For piping
-	if (command->next != NULL) {
-		// In here add the piping mechanism	
-	}
-	printf("-%s: %s: command not found\n", sysname, command->name);
-	return UNKNOWN;
-	*/
 }
