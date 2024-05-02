@@ -6,6 +6,9 @@
 #include <sys/wait.h>
 #include <termios.h> // termios, TCSANOW, ECHO, ICANON
 #include <unistd.h>
+#include <dirent.h>
+#include <sys/stat.h>
+
 const char *sysname = "mishell";
 
 enum return_codes {
@@ -269,6 +272,12 @@ void prompt_backspace() {
 	putchar(8); // go back 1 again
 }
 
+int is_executable(const char *path) {
+    struct stat statbuf;
+    if (stat(path, &statbuf) != 0) return 0; // Failed to get info, assume not executable
+    return (statbuf.st_mode & S_IXUSR) || (statbuf.st_mode & S_IXGRP) || (statbuf.st_mode & S_IXOTH);
+}
+
 /**
  * Prompt a command from the user
  * @param  buf      [description]
@@ -305,8 +314,50 @@ int prompt(struct command_t *command) {
 
 		// handle tab
 		if (c == 9) {
+			printf("\n%s\n", buf);
+			char cwd[1024];
+			if (getcwd(cwd, sizeof(cwd)) == NULL) {
+				perror("getcwd");
+				return 1;
+			}
+			
+			char *path_env = getenv("PATH");
+			if (!path_env) {
+				path_env = "";
+			}
+
+			// Include cwd in the path to be searched
+			char *new_path = malloc(strlen(cwd) + strlen(path_env) + 2);
+			sprintf(new_path, "%s:%s", path_env, cwd);
+			
+			char *dir = strtok(new_path, ":");
+			while (dir != NULL) {
+				struct dirent *entry;
+				DIR *dp = opendir(dir);
+				if (dp != NULL) {
+					while ((entry = readdir(dp)) != NULL) {
+						char full_path[1024];
+						sprintf(full_path, "%s/%s", dir, entry->d_name);
+
+						// Check if the file is executable
+						if (entry->d_type == DT_REG && is_executable(full_path)) {
+							// printf("%s\n", entry->d_name);
+							// In here, compare it with the ongiong command
+						}
+					}
+					closedir(dp);
+				} else {
+					perror("opendir");
+				}
+				dir = strtok(NULL, ":");
+			}
+
+			free(new_path);
+			show_prompt();
+			/*
 			buf[index++] = '?'; // autocomplete
 			break;
+			*/
 		}
 
 		// handle backspace
