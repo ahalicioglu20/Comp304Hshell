@@ -314,7 +314,7 @@ int prompt(struct command_t *command) {
 
 		// handle tab
 		if (c == 9) {
-			printf("\n%s\n", buf);
+
 			char cwd[1024];
 			if (getcwd(cwd, sizeof(cwd)) == NULL) {
 				perror("getcwd");
@@ -326,9 +326,12 @@ int prompt(struct command_t *command) {
 				path_env = "";
 			}
 
-			// Include cwd in the path to be searched
 			char *new_path = malloc(strlen(cwd) + strlen(path_env) + 2);
 			sprintf(new_path, "%s:%s", path_env, cwd);
+
+			char **matches = NULL;
+    		int match_count = 0;
+			int buf_len = strlen(buf);
 			
 			char *dir = strtok(new_path, ":");
 			while (dir != NULL) {
@@ -339,10 +342,14 @@ int prompt(struct command_t *command) {
 						char full_path[1024];
 						sprintf(full_path, "%s/%s", dir, entry->d_name);
 
-						// Check if the file is executable
 						if (entry->d_type == DT_REG && is_executable(full_path)) {
 							// printf("%s\n", entry->d_name);
 							// In here, compare it with the ongiong command
+							// printf("%s\n",buf);
+							if (strncmp(buf, entry->d_name, buf_len) == 0) {
+								matches = realloc(matches, (match_count + 1) * sizeof(char *));
+								matches[match_count++] = strdup(entry->d_name);
+							}
 						}
 					}
 					closedir(dp);
@@ -353,6 +360,15 @@ int prompt(struct command_t *command) {
 			}
 
 			free(new_path);
+
+			if (match_count > 0) {
+				for (int i = 0; i < match_count; i++) {
+					printf("%s\n", matches[i]);
+					free(matches[i]);
+				}
+				free(matches);
+			}
+
 			show_prompt();
 			/*
 			buf[index++] = '?'; // autocomplete
