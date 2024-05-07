@@ -304,17 +304,18 @@ int prompt(struct command_t *command) {
 	// Those new settings will be set to STDIN
 	// TCSANOW tells tcsetattr to change attributes immediately.
 	tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
-
-	show_prompt();
+	// printf("\nOld Buffer %s\n", buf);
 	buf[0] = 0;
-
+	memset(buf, 0, sizeof(char)*(int) strlen(buf));
+	// printf("New Buffer: %s\n", buf);
+	show_prompt();
 	while (1) {
 		c = getchar();
 		// printf("Keycode: %u\n", c); // DEBUG: uncomment for debugging
 
 		// handle tab
 		if (c == 9) {
-
+			
 			char cwd[1024];
 			if (getcwd(cwd, sizeof(cwd)) == NULL) {
 				perror("getcwd");
@@ -347,6 +348,7 @@ int prompt(struct command_t *command) {
 							// In here, compare it with the ongiong command
 							// printf("%s\n",buf);
 							if (strncmp(buf, entry->d_name, buf_len) == 0) {
+								// printf("%s\n",entry->d_name);
 								matches = realloc(matches, (match_count + 1) * sizeof(char *));
 								matches[match_count++] = strdup(entry->d_name);
 							}
@@ -358,23 +360,25 @@ int prompt(struct command_t *command) {
 				}
 				dir = strtok(NULL, ":");
 			}
-
+			printf("\nMatch count: %d", match_count);
 			free(new_path);
 
 			if (match_count > 0) {
 				for (int i = 0; i < match_count; i++) {
-					printf("%s\n", matches[i]);
+					printf("\n%s", matches[i]);
 					free(matches[i]);
 				}
 				free(matches);
 			}
-
+			//printf("\nBuffer size: %zu\n", strlen(buf));
 			show_prompt();
+			printf("%s", buf);
+			//buf[index--] = 0;
 			/*
 			buf[index++] = '?'; // autocomplete
 			break;
 			*/
-		}
+		}	
 
 		// handle backspace
 		if (c == 127) {
@@ -405,8 +409,11 @@ int prompt(struct command_t *command) {
 			continue;
 		}
 
-		putchar(c); // echo the character
-		buf[index++] = c;
+		if (c != 9) {
+			putchar(c); // echo the character
+			buf[index++] = c;
+		}
+
 		if (index >= sizeof(buf) - 1)
 			break;
 		if (c == '\n') // enter key
@@ -415,6 +422,7 @@ int prompt(struct command_t *command) {
 			return EXIT;
 	}
 
+	//printf("Exited");
 	// trim newline from the end
 	if (index > 0 && buf[index - 1] == '\n') {
 		index--;
@@ -426,7 +434,7 @@ int prompt(struct command_t *command) {
 	strcpy(oldbuf, buf);
 
 	parse_command(buf, command);
-
+	memset(buf, 0, sizeof(char)*(int) strlen(buf));
 	print_command(command); // DEBUG: uncomment for debugging
 
 	// restore the old settings
