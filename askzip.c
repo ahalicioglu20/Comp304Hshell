@@ -78,20 +78,20 @@ void process_directory(char *dir_path, int depth) {
 
             if (S_ISDIR(statbuf.st_mode)) {
                 if (strcmp(entry->d_name, ".git") == 0) {
-                    double dirSize = get_directory_size(path);
-                    double zippedSize = zip_directory(path);
-                    original_total += dirSize;
-                    compressed_total += zippedSize;
-                    printf("| %-70s | %12.2f MB | %12.2f MB |\n", path, dirSize / (double) 1024*1024, zippedSize / (double) 1024*1024);
+                    double dir_size = get_directory_size(path);
+                    double zipped_size = zip_directory(path);
+                    original_total += dir_size;
+                    compressed_total += zipped_size;
+                    printf("| %-70s | %12.2f MB | %12.2f MB |\n", path, dir_size / (double) 1024*1024, zipped_size / (double) 1024*1024);
                 } else if (depth == 0) { 
                     process_directory(path, depth + 1);
                 }
             } else {
-                double fileSize = statbuf.st_size;
-                double zippedSize = zip_directory(path);
-                original_total += fileSize;
-                compressed_total += zippedSize;
-                printf("| %-70s | %12.2f MB | %12.2f MB |\n", path, fileSize / (double) 1024*1024, zippedSize / (double) 1024*1024);
+                double file_size = statbuf.st_size;
+                double zipped_size = zip_directory(path);
+                original_total += file_size;
+                compressed_total += zipped_size;
+                printf("| %-70s | %12.2f MB | %12.2f MB |\n", path, file_size / (double) 1024*1024, zipped_size / (double) 1024*1024);
             }
         }
     }
@@ -110,10 +110,10 @@ int main() {
     printf("-------------------------------------------------------------------------------------------------------------------------\n");
     process_directory(cwd, 0);
 
-    double compressionPercentage = 100.0 * (1.0 - ((double)compressed_total / original_total));
+    double compression_percentage = 100.0 * (1.0 - ((double)compressed_total / original_total));
     printf("Total original size: %.2f MB\n", original_total / (double) 1024*1024);
     printf("Total compressed size: %.2f MB\n", compressed_total / (double) 1024*1024);
-    printf("Total compression percentage: %.2f%%\n", compressionPercentage);
+    printf("Total compression percentage: %.2f%%\n", compression_percentage);
 
     char answer[10];
     printf("Do you want to zip the entire directory? (y/n): ");
