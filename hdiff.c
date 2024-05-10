@@ -44,6 +44,7 @@ void compare_text_files(const char *file1, const char *file2) {
     ssize_t file2_line_len;
 
     int file_finished = 0;
+    int line_count = 1;
 
     while (true) {
         file1_line_len = getline(&file1_line, &file1_bufsize, file1_pointer);
@@ -51,15 +52,19 @@ void compare_text_files(const char *file1, const char *file2) {
         if (file1_line_len == -1) {
             // For debug purposes
             //printf("File 1 is finished");
-            printf("File 1: (no corresponding line)\nFile 2: %s", file1_line);
+            printf("Line %d\n", line_count);
+            printf("%s: (no corresponding line)\n%s: %s",file1, file2, file1_line);
             diff_lines ++;
             file_finished = 1;
+            line_count ++;
             break;
         } else if (file2_line_len == -1) {
             //printf("File 2 is finished");
-            printf("File 1: %sFile 2: (no corresponding line)\n", file1_line);
+            printf("Line %d\n", line_count);
+            printf("%s: %s%s: (no corresponding line)\n",file1, file2, file1_line);
             diff_lines ++;
             file_finished = 2;
+            line_count ++;
             break;
         }
 
@@ -73,8 +78,10 @@ void compare_text_files(const char *file1, const char *file2) {
         }
 
         if (strcmp(file1_line, file2_line) != 0) {
-            printf("File 1: %s\nFile 2: %s\n", file1_line, file2_line);
+            printf("Line %d\n", line_count);
+            printf("%s: %s\n%s: %s\n",file1, file1_line, file2, file2_line);
             diff_lines++;
+            line_count ++;
         }
 
     }
@@ -92,8 +99,10 @@ void compare_text_files(const char *file1, const char *file2) {
             if (file1_line[file1_line_len-1] == '\n') {
                 file1_line[file1_line_len-1] = '\0';
             }
-            printf("File 1: %s\nFile 2: (no corresponding line)\n", file1_line);
+            printf("Line %d\n", line_count);
+            printf("%s: %s\n%s: (no corresponding line)\n",file1, file1_line, file2);
             diff_lines++;
+            line_count ++;
         }
     } else if (file_finished == 1) {
         // Check remaining lines in file2
@@ -109,8 +118,10 @@ void compare_text_files(const char *file1, const char *file2) {
             if (file2_line[file2_line_len-1] == '\n') {
                 file2_line[file2_line_len-1] = '\0';
             }
-            printf("File 1: (no corresponding line)\nFile 2: %s\n", file2_line);
+            printf("Line %d\n", line_count);
+            printf("%s: (no corresponding line)\n%s: %s\n",file1, file2, file2_line);
             diff_lines++;
+            line_count ++;
         }
     }
     
