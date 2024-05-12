@@ -51,8 +51,8 @@ void print_command(struct command_t *command) {
 	}
 
 	if (command->next) {
-		//printf("\tPiped to:\n");
-		//print_command(command->next);
+		printf("\tPiped to:\n");
+		print_command(command->next);
 	}
 }
 
@@ -166,6 +166,7 @@ int parse_command(char *buf, struct command_t *command) {
 		arg = temp_buf;
 		strcpy(arg, pch);
 		len = strlen(arg);
+
 
 		// empty arg, go for next
 		if (len == 0) {
@@ -362,7 +363,7 @@ int prompt(struct command_t *command) {
 			}
 			// printf("\nMatch count: %d", match_count);
 			free(new_path);
-
+			printf("\n");
 			if (match_count > 0) {
 				for (int i = 0; i < match_count; i++) {
 					printf("%s\n", matches[i]);
