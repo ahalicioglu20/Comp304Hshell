@@ -51,8 +51,8 @@ void print_command(struct command_t *command) {
 	}
 
 	if (command->next) {
-		printf("\tPiped to:\n");
-		print_command(command->next);
+		//printf("\tPiped to:\n");
+		//print_command(command->next);
 	}
 }
 
@@ -360,12 +360,12 @@ int prompt(struct command_t *command) {
 				}
 				dir = strtok(NULL, ":");
 			}
-			printf("\nMatch count: %d", match_count);
+			// printf("\nMatch count: %d", match_count);
 			free(new_path);
 
 			if (match_count > 0) {
 				for (int i = 0; i < match_count; i++) {
-					printf("\n%s", matches[i]);
+					printf("%s\n", matches[i]);
 					free(matches[i]);
 				}
 				free(matches);
@@ -435,7 +435,7 @@ int prompt(struct command_t *command) {
 
 	parse_command(buf, command);
 	memset(buf, 0, sizeof(char)*(int) strlen(buf));
-	print_command(command); // DEBUG: uncomment for debugging
+	// print_command(command); // DEBUG: uncomment for debugging
 
 	// restore the old settings
 	tcsetattr(STDIN_FILENO, TCSANOW, &backup_termios);
@@ -534,7 +534,7 @@ int process_command(struct command_t *command) {
         num_pipes++;
     }
 
-	printf("Number of pipes: %d\n", num_pipes);
+	// printf("Number of pipes: %d\n", num_pipes);
 
     int pipes[num_pipes][2];
     for (int i = 0; i < num_pipes; i++) {
